@@ -1,0 +1,9 @@
+FROM ARG_FROM
+WORKDIR /tmp
+RUN apt-get -y update && \
+    apt-get -y install bash debootstrap git perl-base xz-utils && \
+    mkdir /build
+RUN git clone --depth 1 --branch v1.8.2-rc1 --single-branch https://github.com/docker/docker.git
+WORKDIR /tmp/docker/contrib
+COPY build_tarball /usr/local/bin/
+ENTRYPOINT ["build_tarball"]

@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+#
+# Build the rootfs.tar.xz tarball inside the container.
+#
+set -euo pipefail
+
+echo "build_tarball running mkimage.sh.."
+./mkimage.sh -d . debootstrap --variant=minbase --components=main --include=inetutils-ping,iproute2 jessie http://httpredir.debian.org/debian
+mv rootfs.tar.xz /build
+echo "rootfs.tar.xz available in /build"

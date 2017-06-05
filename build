@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+#
+# Build the hkjn/debian Docker images.
+#
+set -euo pipefail
+
+DOCKER_USER="hkjn"
+DOCKER_IMAGE="debian"
+ARCH="$(uname -m)"
+
+declare -A BASEIMAGES
+BASEIMAGES[x86_64]=debian:jessie-slim
+BASEIMAGES[armv7l]=armv7/armhf-debian
+
+BASEIMAGE=${BASEIMAGES[$ARCH]}
+BUILD_DIR="$(mktemp -d)"
+TAG="$DOCKER_USER/$DOCKER_IMAGE:$ARCH"
+
+echo "Building rootfs.tar.xz in debian-build.."
+sed "s|ARG_FROM|${BASEIMAGE}|g" Dockerfile.build > $BUILD_DIR/Dockerfile.build
+cp build_tarball Dockerfile $BUILD_DIR/
+cd $BUILD_DIR
+docker build -t debian-build -f Dockerfile.build .
+# TODO(hkjn): Drop --privileged.
+docker rm debian-build || true
+docker run --privileged --name debian-build debian-build
+docker cp debian-build:/build/rootfs.tar.xz .
+
+echo "Building $TAG in $BUILD_DIR"
+docker build -t $TAG $BUILD_DIR
+NO_PUSH=${NO_PUSH:-""}
+[[ "$NO_PUSH" ]] || docker push $TAG
+
